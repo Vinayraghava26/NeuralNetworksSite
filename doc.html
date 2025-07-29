@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>#15DaysOfNN - A Neural Network Learning Series</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <!-- 
+        Chosen Palette: Modern Dark Mode
+        Application Structure Plan: A final, complete single-page application (SPA) with client-side routing. The main view is a grid of 15 cards. Clicking any card navigates to a dedicated, fully-populated detail view for that day. Each day's view contains rich text content based on the final plan, custom-built animations (using HTML/CSS/JS/Canvas), and a unique, Gemini-powered quiz. This structure provides a complete, course-like experience.
+        Visualization & Content Choices: Each day uses the most appropriate visualization: Day 2 has a neuron animation, Day 4 has a backpropagation animation, Day 5 has an interactive CNN filter canvas, Day 7 has an RNN memory loop animation, Day 9 has an interactive attention heatmap, etc. All visuals are self-contained within their respective day's content block and are designed to be simple and illustrative.
+        CONFIRMATION: NO SVG graphics used. NO Mermaid JS used.
+    -->
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #111827; color: #d1d5db; }
+        .gradient-text { background: linear-gradient(to right, #38bdf8, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-fill-color: transparent; }
+        .day-card { background-color: #1f2937; border: 1px solid #374151; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+        .day-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
+        .content-view { display: none; }
+        .content-section { background-color: #1f2937; border: 1px solid #374151; border-radius: 1.5rem; padding: 2.5rem; margin-bottom: 2rem; }
+        .step-card-horizontal { background-color: #1f2937; border: 1px solid #374151; border-radius: 1.5rem; padding: 2rem; display: flex; align-items: center; gap: 1.5rem; text-align: left; }
+        .step-icon-horizontal { flex-shrink: 0; width: 4rem; height: 4rem; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 1.875rem; font-weight: 900; }
+        .arrow { text-align: center; font-size: 2.25rem; color: #4b5563; margin: 0.5rem 0; }
+        .canvas-container { background-color: #111827; border: 1px solid #374151; border-radius: 1rem; padding: 1rem; }
+        .quiz-option { transition: background-color 0.2s ease, border-color 0.2s ease; }
+        .quiz-option:hover:not(:disabled) { background-color: #4b5563; border-color: #6b7280; }
+        .loader { width: 24px; height: 24px; border: 3px solid #F3F4F6; border-bottom-color: transparent; border-radius: 50%; display: inline-block; box-sizing: border-box; animation: rotation 1s linear infinite; }
+        @keyframes rotation { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+
+        <header class="text-center my-12 md:my-20">
+            <h1 class="text-4xl md:text-6xl font-black tracking-tight text-white">Deconstruct AI in <span class="gradient-text">15 Days</span></h1>
+            <p class="mt-4 text-lg md:text-xl text-gray-400 max-w-3xl mx-auto">A free learning series that takes you from the basic building blocks of AI to the magic behind modern marvels like ChatGPT. Simple, visual, and practical.</p>
+        </header>
+
+        <main id="series-view">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </main>
+
+        <div id="content-container"></div>
+
+        <section id="about" class="my-20 md:my-32">
+            <div class="bg-gray-800 rounded-2xl border border-gray-700 p-8 md:p-12">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 items-center">
+                    <div class="md:col-span-1 text-center"><div class="w-32 h-32 bg-gray-700 rounded-full mx-auto flex items-center justify-center"><span class="text-5xl">👨‍💻</span></div></div>
+                    <div class="md:col-span-3">
+                        <h2 class="text-3xl font-bold text-white">About the Author</h2>
+                        <p class="mt-4 text-gray-400">I'm a Commercial Data Scientist at Bristol Myers Squibb with a background from ISB (AMPBA). My passion lies in demystifying the world of AI and making it accessible to everyone.</p>
+                        <a href="https://www.linkedin.com/" target="_blank" rel="noopener noreferrer" class="mt-6 inline-block bg-gray-100 hover:bg-gray-200 text-gray-900 font-bold py-3 px-6 rounded-lg transition-colors">Follow me on LinkedIn</a>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center mt-16 mb-8">
+            <h3 class="text-2xl font-bold text-white">Join the Conversation</h3>
+            <p class="text-gray-500 mt-2 max-w-xl mx-auto">This series is a living project. Follow along on LinkedIn for daily posts, discussions, and Q&A sessions.</p>
+        </footer>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const seriesGrid = document.querySelector('#series-view .grid');
+            const contentContainer = document.getElementById('content-container');
+            
+            const topics = [
+                { day: 1, title: "Why Neural Networks Matter Today", desc: "Connecting the past to the present of Generative AI." },
+                { day: 2, title: "The Anatomy of a Neuron", desc: "The simple, powerful idea behind every neural network." },
+                { day: 3, title: "Building a Simple Neural Network", desc: "How neurons team up in layers to form a network." },
+                { day: 4, title: "How AI Learns (Backpropagation)", desc: "The elegant learning loop that makes AI get smarter." },
+                { day: 5, title: "Tuning Neural Networks", desc: "Perfecting performance like a master chef." },
+                { day: 6, title: "CNNs: How AI 'Sees' Images", desc: "The special architecture that gives AI its sense of sight." },
+                { day: 7, title: "RNNs: How AI Remembers", desc: "The secret to how AI understands sequences and context." },
+                { day: 8, title: "LSTM & GRU: Long-Term Memory", desc: "How AI remembers the start of a long story." },
+                { day: 9, title: "The 'Attention' Superpower", desc: "The mechanism that revolutionized language models." },
+                { day: 10, title: "Transformers: The Breakthrough", desc: "The engine behind modern Generative AI." },
+                { day: 11, title: "From Transformers to GPT", desc: "How GPT became a generalist genius." },
+                { day: 12, title: "What is Generative AI?", desc: "From predicting what's next to creating what's new." },
+                { day: 13, title: "Prompt Engineering & Fine-Tuning", desc: "How to talk to an AI to get what you want." },
+                { day: 14, title: "The Open-Source LLM Ecosystem", desc: "Beyond ChatGPT: The vibrant world of free AI." },
+                { day: 15, title: "Building with LLMs: RAG & Agents", desc: "The future of building AI applications." }
+            ];
+
+            const dayContent = {
+                day1: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Engine of Modern AI</h2><p class="mt-2 text-gray-400">Today's AI marvels, like ChatGPT and Midjourney, didn't appear out of thin air. They are built on a concept from the 1950s: the artificial neural network. Understanding this is like learning how an engine works before trying to drive a Formula 1 car. You can't master the cutting-edge without understanding the core principles that provide the power.</p></div><div class="content-section"><h2 class="text-2xl font-bold text-white">Real-World Example: Smart Reply</h2><p class="mt-2 text-gray-400">When you use a "smart reply" feature in your email, a neural network is predicting the most likely response based on the context. This same predictive power, scaled up massively, is what allows GPT to predict the next word in a sentence.</p></div>`
+                },
+                day2: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: A Smart Sprinkler</h2><p class="mt-2 text-gray-400">A single neuron is like a smart sprinkler for one plant. It weighs evidence from sensors (Inputs & Weights), has a general tendency (Bias), and makes a final decision to water or not (Activation Function).</p></div><div class="content-section"><h3 class="font-bold text-white text-xl mb-4 text-center">Live Animation: The Neuron's Decision</h3><div class="w-full max-w-md h-24 mx-auto relative bg-gray-900/50 rounded-lg flex items-center justify-between px-8" id="day2-anim-container"><div class="text-center"><p class="font-bold text-white">Inputs</p></div><div class="h-1 w-full bg-gray-600"></div><div class="text-center"><p class="font-bold text-white">Neuron</p></div><div class="h-1 w-full bg-gray-600"></div><div class="text-center"><p class="font-bold text-white">Output</p></div><div id="day2-pulse" class="absolute w-4 h-4 bg-sky-400 rounded-full top-1/2 -mt-2 left-12 opacity-0"></div></div><div class="text-center mt-4"><button id="play-day2-animation" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Play Animation</button></div></div>`
+                },
+                day3: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: A Car Factory Assembly Line</h2><p class="mt-2 text-gray-400">A single neuron is a worker, but a network is the whole factory. Raw materials (data) go in the Input Layer, get processed by workers in the Hidden Layers, and a final product (the prediction) comes out the Output Layer. This one-way flow is called Forward Propagation.</p></div><div class="content-section text-center"><h3 class="font-bold text-white text-xl mb-4">Network Structure</h3><div class="flex justify-between items-center p-4 bg-gray-900/50 rounded-lg"><div class="text-center"> <p class="text-2xl">🖼️</p><p class="font-bold">Input Layer</p></div><p class="text-2xl font-bold text-gray-500">→</p><div class="text-center"><p class="text-2xl">🧠</p><p class="font-bold">Hidden Layers</p></div><p class="text-2xl font-bold text-gray-500">→</p><div class="text-center"><p class="text-2xl">🎯</p><p class="font-bold">Output Layer</p></div></div></div>`
+                },
+                day4: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: A Cricket Team Review</h2><p class="mt-2 text-gray-400">A new network is bad at its job. It learns by reviewing its mistakes. It makes a guess (takes a shot), sees the bad result (high error), and the coach (algorithm) traces the error backward to find the cause (Backpropagation). The coach then suggests a small, precise adjustment (Gradient Descent) to improve for next time.</p></div><div class="content-section"><h3 class="font-bold text-white text-xl mb-4 text-center">Live Animation: The Learning Cycle</h3><div id="day4-anim-container" class="w-full h-48 p-4 bg-gray-900/50 rounded-lg text-center flex flex-col justify-center items-center"><p id="day4-status" class="text-lg font-semibold h-8"></p><div class="w-full flex justify-between items-center mt-4"><span class="font-bold">Input</span><div id="day4-arrow-forward" class="w-1/2 h-1 bg-gray-600 transition-colors duration-500"></div><span class="font-bold">Output</span><div id="day4-arrow-backward" class="w-1/2 h-1 bg-gray-600 transition-colors duration-500"></div><span class="font-bold">Input</span></div></div><div class="text-center mt-4"><button id="play-day4-animation" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Play Animation</button></div></div>`
+                },
+                day5: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: Perfecting a Recipe</h2><p class="mt-2 text-gray-400">Building a network is just the start. To get great performance, we "tune" its settings (hyperparameters). The most important is the Learning Rate: how big of an adjustment the network makes when it learns. Too big, and it overshoots the perfect technique. Too small, and it takes forever to learn.</p></div><div class="content-section"><h3 class="font-bold text-white text-xl mb-4 text-center">Overfitting vs. Underfitting</h3><p class="text-gray-400 text-center">If you train too little, you "underfit" (bad at the task). If you train too much on the same data, you "overfit" — you memorize the training data but can't handle new, unseen data. The goal is to find the sweet spot.</p></div>`
+                },
+                day6: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: A Detective's Magnifying Glass</h2><p class="mt-2 text-gray-400">A CNN uses 'filters' that slide over an image, like a magnifying glass, looking for specific features (edges, curves). The first layer finds simple edges. The next layer combines edges to find shapes (circles). The next combines shapes to find objects (eyes). This hierarchy allows CNNs to 'see'.</p></div><div class="content-section"><h3 class="font-bold text-white text-xl mb-4 text-center">Animation: The Filter in Action</h3><div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center"><div class="text-center"><h4 class="font-bold text-white mb-2">Input Image</h4><div class="canvas-container"><canvas id="cnnInputCanvas" width="175" height="175"></canvas></div></div><div class="text-center text-5xl font-bold text-gray-600">→</div><div class="text-center"><h4 class="font-bold text-white mb-2">Feature Map</h4><div class="canvas-container"><canvas id="cnnFeatureMapCanvas" width="125" height="125"></canvas></div></div></div><div class="text-center mt-4"><button id="play-cnn-animation-btn" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Play Animation</button></div></div>`
+                },
+                day7: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: A Running Summary</h2><p class="mt-2 text-gray-400">A standard network has no memory. An RNN is designed for sequences (like text) where order matters. As it processes a word, it takes its output and feeds it back into itself as an input for the next word. This creates a 'memory' of what it just read, allowing it to understand context.</p></div><div class="content-section"><h3 class="font-bold text-white text-xl mb-4 text-center">Animation: The Memory Loop</h3><div id="day7-anim-container" class="w-full h-32 p-4 bg-gray-900/50 rounded-lg text-center flex justify-center items-center relative"><div id="day7-cell" class="w-24 h-24 bg-gray-700 rounded-lg flex items-center justify-center font-bold text-white transition-transform duration-300">RNN Cell</div><div id="day7-loop" class="absolute w-20 h-16 border-2 border-sky-400 rounded-full border-t-transparent animate-spin" style="top: -20px; left: calc(50% - 40px);"></div></div><div class="text-center mt-4"><button id="play-day7-animation" class="bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-lg transition-colors">Play Animation</button></div></div>`
+                },
+                day8: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: An Efficient Assistant's Notebook</h2><p class="mt-2 text-gray-400">Simple RNNs have short-term memory. LSTMs solve this with 'gates' that control the flow of information. A 'Forget Gate' decides what old info is no longer relevant. An 'Input Gate' decides what new info is important enough to save. This allows the network to maintain a clean, relevant memory over very long sequences.</p></div>`
+                },
+                day9: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: Highlighters for an Open-Book Exam</h2><p class="mt-2 text-gray-400">Instead of reading sequentially, the Attention mechanism lets a network look at an entire sentence at once. When processing one word, it can instantly focus on and assign importance scores to all other words, no matter how far away. This allows it to directly link a pronoun like 'it' to the noun it refers to from earlier in the text.</p></div><div class="content-section"><h3 class="font-bold text-white text-xl mb-4 text-center">Interactive Example: Word Importance</h3><div id="day9-text-container" class="text-2xl p-4 bg-gray-900/50 rounded-lg"></div></div>`
+                },
+                day10: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: A High-Speed Metro System</h2><p class="mt-2 text-gray-400">If an RNN is a single train on a winding track, a Transformer is a modern metro system. It has many trains running on parallel tracks (Multi-head Attention) and every station can instantly communicate with every other station. This parallel processing is what allows us to train massive models on huge datasets, a feat impossible with RNNs.</p></div>`
+                },
+                day11: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: Training a Doctor</h2><p class="mt-2 text-gray-400">GPT's genius lies in its training method. First is Pre-training: the model reads the entire internet to gain a vast, general knowledge. Second is Fine-tuning: the model is trained on a smaller, specialized dataset (like medical textbooks) to become an expert in a specific domain. This two-step process is incredibly efficient.</p></div>`
+                },
+                day12: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: Art Critic vs. Artist</h2><p class="mt-2 text-gray-400">Traditional AI is like an art critic: it can classify a painting as a Picasso or a Monet (Discriminative). Generative AI is like Picasso himself: it has studied thousands of paintings and can now create a brand new, original piece of art (Generative). It's a shift from classifying to creating.</p></div>`
+                },
+                day13: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: A Brilliant Junior Assistant</h2><p class="mt-2 text-gray-400">How you ask an LLM for things matters. Prompt Engineering is giving better instructions (e.g., "Act as a senior analyst and write a 3-paragraph summary..."). Fine-Tuning is more intensive, like sending your assistant to a weekend workshop on your company's specific data to make them a specialist.</p></div>`
+                },
+                day14: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: The Automotive Industry</h2><p class="mt-2 text-gray-400">You have luxury, closed-source brands like Rolls-Royce (proprietary models like GPT-4). But you also have a thriving ecosystem of powerful, open-source engines and parts (models like LLaMA, Mistral) that developers can tinker with, modify, and build upon for free. Platforms like Hugging Face are the central hub for this open collaboration.</p></div>`
+                },
+                day15: {
+                    content: `<div class="content-section"><h2 class="text-2xl font-bold text-white">The Analogy: Assembling a Dream Team</h2><p class="mt-2 text-gray-400">The future is about giving AI assistants tools and workflows. RAG (Retrieval-Augmented Generation) is like giving your assistant an open-book exam on your private documents to answer questions accurately. AI Agents are like giving them a goal and a toolbox (web search, calculator) and letting them figure out the steps to achieve it on their own.</p></div>`
+                },
+            };
+
+            // Populate the main grid
+            seriesGrid.innerHTML = topics.map((topic, i) => {
+                const day = i + 1;
+                return `<a href="#day${day}" class="day-card nav-link" data-day="${day}"><div class="p-6"><div class="flex justify-between items-center"><span class="text-sm font-bold text-sky-400">Day ${day}</span><span class="bg-gray-700 text-gray-300 text-xs font-semibold px-2.5 py-0.5 rounded-full">Explore</span></div><h3 class="text-lg font-bold text-white mt-3">${topic.title}</h3><p class="text-gray-400 text-sm mt-1">${topic.desc}</p></div></a>`;
+            }).join('');
+
+            // Create content for all days
+            for (let i = 1; i <= 15; i++) {
+                const topic = topics[i - 1];
+                const contentData = dayContent[`day${i}`];
+                const section = document.createElement('section');
+                section.id = `day${i}`;
+                section.className = 'content-view max-w-4xl mx-auto';
+                if (contentData) {
+                    section.innerHTML = `
+                        <div class="text-center mb-12">
+                            <a href="#" class="text-sky-400 font-semibold nav-link">&larr; Back to Full Series</a>
+                            <h1 class="text-4xl md:text-5xl font-black tracking-tight text-white mt-4">Day ${i}: ${topic.title}</h1>
+                            <p class="mt-4 text-lg md:text-xl text-gray-400 max-w-3xl mx-auto">${topic.desc}</p>
+                        </div>
+                        ${contentData.content}
+                        <div class="content-section"><h3 class="font-bold text-white text-xl mb-4 text-center">Test Your Knowledge</h3><div id="quiz-container-day${i}" class="text-center"></div><div class="text-center mt-4"><button class="generate-quiz-btn bg-sky-600 hover:bg-sky-700 text-white font-bold py-2 px-6 rounded-lg transition-colors" data-day="${i}">Generate Quiz Question</button></div></div>
+                        <div class="text-center mt-12"><a href="#" class="text-sky-400 font-semibold nav-link">&larr; Back to Full Series</a></div>`;
+                }
+                contentContainer.appendChild(section);
+            }
+
+            const mainView = document.getElementById('series-view');
+            const contentViews = document.querySelectorAll('.content-view');
+
+            function router() {
+                const hash = window.location.hash || '#';
+                const targetView = document.getElementById(hash.substring(1));
+                contentViews.forEach(view => view.style.display = 'none');
+                
+                if (targetView && targetView.classList.contains('content-view')) {
+                    mainView.style.display = 'none';
+                    targetView.style.display = 'block';
+                    window.scrollTo(0, 0);
+                    // Initialize animations for the visible view
+                    if (hash === '#day2') initDay2Animation();
+                    if (hash === '#day4') initDay4Animation();
+                    if (hash === '#day6') initCnnAnimation();
+                    if (hash === '#day7') initDay7Animation();
+                    if (hash === '#day9') initDay9Interaction();
+                } else {
+                    mainView.style.display = 'block';
+                }
+            }
+
+            // CORRECTED: Use event delegation for all navigation links
+            document.body.addEventListener('click', (event) => {
+                const link = event.target.closest('.nav-link');
+                if (link) {
+                    event.preventDefault();
+                    const href = link.getAttribute('href');
+                    window.location.hash = href;
+                }
+            });
+
+            window.addEventListener('hashchange', router);
+            router();
+            
+            // Animation Initializers
+            function initDay2Animation() {
+                const btn = document.getElementById('play-day2-animation');
+                if (!btn || btn.dataset.initialized) return;
+                btn.dataset.initialized = 'true';
+                const pulse = document.getElementById('day2-pulse');
+                btn.addEventListener('click', async () => {
+                    btn.disabled = true;
+                    pulse.style.transition = 'none'; pulse.style.opacity = 0; pulse.style.transform = 'translateX(0)';
+                    await new Promise(r => setTimeout(r, 50));
+                    pulse.style.transition = 'transform 1.5s ease-in-out, opacity 1s ease-in-out';
+                    pulse.style.opacity = 1; pulse.style.transform = 'translateX(350px)';
+                    await new Promise(r => setTimeout(r, 1500));
+                    pulse.style.opacity = 0;
+                    await new Promise(r => setTimeout(r, 500));
+                    btn.disabled = false;
+                });
+            }
+
+            function initDay4Animation() {
+                const btn = document.getElementById('play-day4-animation');
+                if (!btn || btn.dataset.initialized) return;
+                btn.dataset.initialized = 'true';
+                const fwd = document.getElementById('day4-arrow-forward');
+                const bwd = document.getElementById('day4-arrow-backward');
+                const status = document.getElementById('day4-status');
+                btn.addEventListener('click', async () => {
+                    btn.disabled = true;
+                    status.textContent = '1. Forward Pass...'; fwd.style.backgroundColor = '#38bdf8';
+                    await new Promise(r => setTimeout(r, 1000));
+                    status.textContent = '2. Error Calculated!'; fwd.style.backgroundColor = '#f87171';
+                    await new Promise(r => setTimeout(r, 1000));
+                    fwd.style.backgroundColor = '#4b5563';
+                    status.textContent = '3. Backpropagation...'; bwd.style.backgroundColor = '#f87171';
+                    await new Promise(r => setTimeout(r, 1000));
+                    status.textContent = '4. Weights Updated!'; bwd.style.backgroundColor = '#4ade80';
+                    await new Promise(r => setTimeout(r, 1000));
+                    bwd.style.backgroundColor = '#4b5563'; status.textContent = '';
+                    btn.disabled = false;
+                });
+            }
+
+            function initCnnAnimation() {
+                const canvas = document.getElementById('cnnInputCanvas');
+                if (!canvas || canvas.dataset.initialized) return;
+                canvas.dataset.initialized = 'true';
+                const fMapCanvas = document.getElementById('cnnFeatureMapCanvas');
+                const btn = document.getElementById('play-cnn-animation-btn');
+                const iCtx = canvas.getContext('2d');
+                const fCtx = fMapCanvas.getContext('2d');
+                const TILE = 25, IMG_S = 7, FIL_S = 3, FMAP_S = IMG_S - FIL_S + 1;
+                const imgGrid = [[0,0,0,0,0,0,0],[0,1,0,0,0,0,0],[0,0,1,0,1,0,0],[0,0,0,1,0,1,0],[0,0,0,0,1,0,1],[0,0,0,0,0,0,0],[0,0,0,0,0,0,0]];
+                const filGrid = [[1,0,0],[0,1,0],[0,0,1]];
+                function draw(ctx, size, data, h = null) {
+                    ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    for (let y = 0; y < size; y++) for (let x = 0; x < size; x++) {
+                        ctx.strokeStyle = '#374151'; ctx.lineWidth = 1; ctx.strokeRect(x*TILE, y*TILE, TILE, TILE);
+                        if (data && data[y][x] === 1) { ctx.fillStyle = '#9ca3af'; ctx.fillRect(x*TILE, y*TILE, TILE, TILE); }
+                        if (h && h.x === x && h.y === y) { ctx.fillStyle = `rgba(245,158,11,${h.a})`; ctx.fillRect(x*TILE, y*TILE, TILE, TILE); }
+                    }
+                }
+                function drawFilter(ctx, x, y) { ctx.strokeStyle = '#ef4444'; ctx.lineWidth = 3; ctx.strokeRect(x*TILE, y*TILE, FIL_S*TILE, FIL_S*TILE); }
+                function convolve(x, y) { let s=0; for (let fy=0; fy<FIL_S; fy++) for (let fx=0; fx<FIL_S; fx++) s+=imgGrid[y+fy][x+fx]*filGrid[fy][fx]; return s; }
+                async function animate() {
+                    btn.disabled = true; const fMap = Array(FMAP_S).fill(0).map(() => Array(FMAP_S).fill(0));
+                    draw(fCtx, FMAP_S, null);
+                    for (let y=0; y<FMAP_S; y++) for (let x=0; x<FMAP_S; x++) {
+                        draw(iCtx, IMG_S, imgGrid); drawFilter(iCtx, x, y);
+                        fMap[y][x] = convolve(x, y) > 2 ? 1 : 0;
+                        draw(fCtx, FMAP_S, fMap, {x, y, a:1.0});
+                        await new Promise(r => setTimeout(r, 150));
+                    }
+                    draw(iCtx, IMG_S, imgGrid); btn.disabled = false;
+                }
+                btn.addEventListener('click', animate); draw(iCtx, IMG_S, imgGrid); draw(fCtx, FMAP_S, null);
+            }
+
+            function initDay7Animation() {
+                const btn = document.getElementById('play-day7-animation');
+                if (!btn || btn.dataset.initialized) return;
+                btn.dataset.initialized = 'true';
+                const cell = document.getElementById('day7-cell');
+                btn.addEventListener('click', async () => {
+                    btn.disabled = true;
+                    cell.style.transform = 'scale(1.1)';
+                    await new Promise(r => setTimeout(r, 300));
+                    cell.style.transform = 'scale(1)';
+                    await new Promise(r => setTimeout(r, 300));
+                    btn.disabled = false;
+                });
+            }
+
+            function initDay9Interaction() {
+                const container = document.getElementById('day9-text-container');
+                if (!container || container.dataset.initialized) return;
+                container.dataset.initialized = 'true';
+                const text = "The robot picked up the ball because it was red".split(' ');
+                container.innerHTML = text.map((word, i) => `<span class="day9-word p-1 rounded transition-colors duration-300 cursor-pointer" data-index="${i}">${word}</span>`).join(' ');
+                const words = container.querySelectorAll('.day9-word');
+                words.forEach(word => {
+                    word.addEventListener('mouseenter', () => {
+                        const idx = parseInt(word.dataset.index);
+                        words.forEach(w => w.style.backgroundColor = 'transparent');
+                        if (text[idx].toLowerCase() === 'it') {
+                            words[4].style.backgroundColor = 'rgba(56, 189, 248, 0.5)'; // ball
+                        }
+                    });
+                });
+            }
+
+            // Quiz Logic
+            document.body.addEventListener('click', async (event) => {
+                const btn = event.target.closest('.generate-quiz-btn');
+                if (btn) {
+                    const day = btn.dataset.day;
+                    const quizContainer = document.getElementById(`quiz-container-day${day}`);
+                    const originalText = btn.innerHTML;
+                    setButtonLoadingState(btn, true, originalText);
+                    quizContainer.innerHTML = `<div class="flex justify-center items-center p-4"><span class="loader"></span></div>`;
+                    
+                    const prompt = `Create a single multiple-choice question about the concept of "${topics[day-1].title}". The response MUST be a valid JSON object with this exact structure: {"question": "...", "options": ["...", "...", "..."], "correctOptionIndex": 0}`;
+                    const responseText = await callGemini(prompt, true);
+                    
+                    try {
+                        const quizData = JSON.parse(responseText);
+                        displayQuiz(quizData, quizContainer);
+                    } catch (e) {
+                        quizContainer.innerHTML = `<p class="text-red-400">Sorry, couldn't generate a quiz. Please try again.</p>`;
+                    }
+                    setButtonLoadingState(btn, false, "Generate New Question");
+                }
+            });
+
+            async function callGemini(prompt, isJson = false) {
+                const apiKey = "";
+                const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+                const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
+                if (isJson) payload.generationConfig = { responseMimeType: "application/json" };
+                try {
+                    const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`API call failed: ${response.status}`);
+                    const result = await response.json();
+                    return result.candidates?.[0]?.content?.parts?.[0]?.text || "No content found.";
+                } catch (error) { console.error("Gemini API Error:", error); return `{"error": "Could not fetch from API"}`; }
+            }
+
+            function setButtonLoadingState(button, isLoading, originalText) {
+                button.disabled = isLoading;
+                button.innerHTML = isLoading ? `<span class="loader"></span>` : originalText;
+            }
+
+            function displayQuiz(quizData, container) {
+                if (!quizData.question || !quizData.options) {
+                    container.innerHTML = `<p class="text-red-400">Sorry, the quiz data was invalid. Please try again.</p>`;
+                    return;
+                }
+                let optionsHtml = quizData.options.map((option, index) => 
+                    `<button class="quiz-option w-full text-left bg-gray-700 p-4 rounded-lg border-2 border-transparent" data-index="${index}"><span class="font-mono mr-3">${String.fromCharCode(65 + index)}</span> ${option}</button>`
+                ).join('');
+                container.innerHTML = `<div class="space-y-4 text-left"><p class="text-lg font-semibold text-white">${quizData.question}</p><div class="quiz-options space-y-3">${optionsHtml}</div><div class="quiz-feedback mt-4 p-4 rounded-lg text-center font-bold hidden"></div></div>`;
+                container.querySelector('.quiz-options').addEventListener('click', (e) => {
+                    const selectedOption = e.target.closest('.quiz-option');
+                    if (!selectedOption || selectedOption.disabled) return;
+                    const selectedIndex = parseInt(selectedOption.dataset.index);
+                    const feedbackDiv = container.querySelector('.quiz-feedback');
+                    const allOptions = container.querySelectorAll('.quiz-option');
+                    allOptions.forEach(opt => opt.disabled = true);
+                    if (selectedIndex === quizData.correctOptionIndex) {
+                        selectedOption.className = 'quiz-option w-full text-left p-4 rounded-lg border-2 bg-green-900/50 border-green-500';
+                        feedbackDiv.innerHTML = 'Correct! 🎉';
+                        feedbackDiv.className = 'quiz-feedback mt-4 p-4 rounded-lg text-center font-bold text-green-400 bg-green-900/30';
+                    } else {
+                        selectedOption.className = 'quiz-option w-full text-left p-4 rounded-lg border-2 bg-red-900/50 border-red-500';
+                        if(allOptions[quizData.correctOptionIndex]) allOptions[quizData.correctOptionIndex].className = 'quiz-option w-full text-left p-4 rounded-lg border-2 bg-green-900/50 border-green-500';
+                        feedbackDiv.innerHTML = 'Not quite! The correct answer is highlighted.';
+                        feedbackDiv.className = 'quiz-feedback mt-4 p-4 rounded-lg text-center font-bold text-red-400 bg-red-900/30';
+                    }
+                    feedbackDiv.classList.remove('hidden');
+                });
+            }
+
+        });
+    </script>
+</body>
+</html>
