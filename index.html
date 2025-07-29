@@ -333,7 +333,7 @@
             });
 
             async function callGemini(prompt, isJson = false) {
-                const apiKey = "";
+                const apiKey = "AIzaSyDroxaE9hAeI7eXMcKZaQbiiJ53r9AK6yw";
                 const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
                 const payload = { contents: [{ role: "user", parts: [{ text: prompt }] }] };
                 if (isJson) payload.generationConfig = { responseMimeType: "application/json" };
